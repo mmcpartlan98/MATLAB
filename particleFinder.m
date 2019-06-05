@@ -10,10 +10,10 @@ readPath = [filePath  fileName  '.dpt'];
 
 % filePath = 'C:\Users\PC\iCloudDrive\Desktop\UHRMap135.dpt';
 
-% Set significance cutoff for background nois
+% Set significance cutoff for background noise
 lowerSignificanceCutoff = 0;
 
-[xScale, correctedSpectra, rawSpectra, inflectionsFull] = dptRead(readPath, 40, 40);
+[xScale, correctedSpectra, rawSpectra, inflectionsFull] = dptRead(readPath, 60, 60);
 
 scArry = score(inflectionsFull, correctedSpectra, xScale);
 
@@ -34,7 +34,7 @@ minimum = min(min(scArry(scArry > 0)));
 [xMin,yMin] = find(scArry == minimum);
 [xMax,yMax] = find(scArry == maximum);
 
-clusters = clusterSpectra(inflectionsFull, correctedSpectra, xScale, 'n');
+clusters = clusterSpectra(inflectionsFull, 'n', scArry);
 
 % Generate spectra for all each particle
 numberOfParticles = max(max(clusters));
@@ -50,7 +50,7 @@ for particle = 1:numberOfParticles
     set(gca, 'XDir','reverse');
 end
 
-writePath = [filePath 'PendingSearches/' fileName 'Clustered' '.dat'];
+writePath = [filePath 'PendingSearches/' fileName 'Clustered' '.csv'];
 writematrix(particleSpectra, writePath);
 
 % Generare figures below

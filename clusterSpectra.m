@@ -1,4 +1,4 @@
-function [clusters] = clusterSpectra(inflectionsFullLocal, correctedSpectraLocal, xScaleLocal, plotResultsLocal)
+function [clusters] = clusterSpectra(inflectionsFullLocal, plotResultsLocal, scoreArrayLocal)
 
 [rows, cols, ~] = size(inflectionsFullLocal);
 clusters = zeros(rows, cols);
@@ -6,15 +6,14 @@ clusters = zeros(rows, cols);
 % Adjacent squares must be within 10% scores to count as a cluster
 hitThreshold = 0.25;
 
-scoreArray = score(inflectionsFullLocal, correctedSpectraLocal, xScaleLocal);
-backgroundCutoff = mean(scoreArray, 'all') + 3 * std(scoreArray);
+backgroundCutoff = mean(scoreArrayLocal, 'all') + 3 * std(scoreArrayLocal);
 
 % Calculate background
 for row = 1:rows
     for col = 1:cols
         fprintf('Calculating background on cell %d, %d\n', row, col);
-        if (scoreArray(row, col) < backgroundCutoff)
-            scoreArray(row, col) = 0;
+        if (scoreArrayLocal(row, col) < backgroundCutoff)
+            scoreArrayLocal(row, col) = 0;
         end
     end
 end
@@ -22,13 +21,13 @@ end
 for row = 1:rows
     for col = 1:cols
         fprintf('Clustering on cell %d, %d\n', row, col);
-        if (scoreArray(row, col) ~= 0)
-            minCutoff = scoreArray(row, col) - scoreArray(row, col) * hitThreshold;
-            maxCutoff = scoreArray(row, col) + scoreArray(row, col) * hitThreshold;
-            scoreArrayTemp = scoreArray;
+        if (scoreArrayLocal(row, col) ~= 0)
+            minCutoff = scoreArrayLocal(row, col) - scoreArrayLocal(row, col) * hitThreshold;
+            maxCutoff = scoreArrayLocal(row, col) + scoreArrayLocal(row, col) * hitThreshold;
+            scoreArrayTemp = scoreArrayLocal;
             for internalRow = 1:rows
                 for internalCol = 1:cols
-                    scoreArrayTemp(internalRow, internalCol) = scoreArray(internalRow, internalCol) * (scoreArray(internalRow, internalCol) > minCutoff && scoreArray(internalRow, internalCol) < maxCutoff);
+                    scoreArrayTemp(internalRow, internalCol) = scoreArrayLocal(internalRow, internalCol) * (scoreArrayLocal(internalRow, internalCol) > minCutoff && scoreArrayLocal(internalRow, internalCol) < maxCutoff);
                     if (scoreArrayTemp(internalRow, internalCol) ~= 0)
                         scoreArrayTemp(internalRow, internalCol) = 1;
                     end
