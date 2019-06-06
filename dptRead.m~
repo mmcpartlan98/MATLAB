@@ -14,11 +14,11 @@ rawSpectra = zeros(xGrid, yGrid, length(xScale));
 for fileColumn = columns:-1:2
     % Raw absorbance values (flipped to match ascending xScale)
     intensity = flip(dptFile(:, columns - fileColumn + 2));
-    rawSpectra(xGrid - floor((fileColumn - 2)/xGrid), mod(fileColumn - 2, xGrid) + 1, :) = intensity;
+    rawSpectra(xGrid - floor((fileColumn - 2)/xGrid), yGrid - mod(fileColumn - 2, xGrid), :) = intensity;
 
     % Baseline adjusted absorbance
-    baselineCorrected = msbackadj(xScale, intensity, 'StepSize', windowSize);
-    correctedSpectra(xGrid - floor((fileColumn - 2)/xGrid), mod(fileColumn - 2, xGrid) + 1, :) = baselineCorrected;
+    baselineCorrected = flip(msbackadj(xScale, intensity, 'StepSize', windowSize));
+    correctedSpectra(xGrid - floor((fileColumn - 2)/xGrid),  yGrid - mod(fileColumn - 2, xGrid) , :) = baselineCorrected;
     
     % Calculate first derivative
     numDerivative = diff(intensity)./diff(xScale);
