@@ -2,7 +2,7 @@ function [xScale, correctedSpectra, rawSpectra, inflectionsFull] = dptRead(filen
 % Returns xScale in ASCENDING order and rawSpectra flipped to MATCH xSCALE
 dptFile = csvread(filename);
 windowSize = 50;
-
+debug = 'n';
 % Ascending order
 xScale = flip(dptFile(:, 1));
 
@@ -16,11 +16,11 @@ rowIndex = xGrid;
 colIndex = 1;
 
 for fileColumn = columns:-1:2
-
+    
     % Raw absorbance values (flipped to match ascending xScale)
     intensity = flip(dptFile(:, columns - fileColumn + 2));
     rawSpectra(rowIndex, colIndex, :) = intensity;
-
+    
     % Baseline adjusted absorbance
     % baselineCorrected = msbackadj(xScale, intensity, 'StepSize', windowSize);
     baselineCorrected = stripOffset(xScale, intensity);
@@ -38,7 +38,21 @@ for fileColumn = columns:-1:2
     
     if (sum(abs(numDerivative)) ~= 0)
         % Find zeros, flip to restore conventional spectral notation
-        zeroCrossingsX = data_zeros(flip(xScale), flip(numDerivative2))';
+        % zeroCrossingsX = data_zeros(flip(xScale(1:length(xScale) - 2)), flip(numDerivative2))';
+        zeroCrossingsX = data_zeros(flip(xScale(1:length(xScale))), flip(numDerivative))';
+        
+        % DEBUG MODE GRAPHING UTILITY
+        if (debug == 'y')
+            zeroCrossingsMagnitude = zeros(1, length(xScale));
+            for magIndex = 1:xScale
+                zeroCrossingsMagnitude(magIndex) = intensity(searchX(xScale, zeroCrossingsX(magIndex)));
+            end
+            figure;
+            stem(zeroCrossingsX(1:length(zeroCrossingsX)), zeroCrossingsMagnitude(1:length(zeroCrossingsMagnitude)));
+            hold on;
+            plot(xScale, intensity);
+        end
+        
         % Pad with zeros to concatenate
         zeroCrossingsX = [flip(sort(zeroCrossingsX)') zeros(1, length(xScale) - length(zeroCrossingsX))];
     else

@@ -5,11 +5,15 @@ close all;
 
 filePath = '/Users/mattmcpartlan/Desktop/';
 prompt = 'File name on Desktop (Dont include extensions): ';
-fileName = input(prompt, 's');
+fileName = 'OVRsample143';
+% fileName = input(prompt, 's');
 readPath = [filePath  fileName  '.dpt'];
 
-rowLength = input('Row length: ');
-colLength = input('Number of columns: ');
+% rowLength = input('Row length: ');
+% colLength = input('Number of columns: ');
+
+rowLength = 25;
+colLength = 25;
 
 % readPath = 'C:\Users\PC\iCloudDrive\Desktop\UHRsample140.dpt';
 
