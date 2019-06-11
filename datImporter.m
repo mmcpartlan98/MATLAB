@@ -64,7 +64,7 @@ for i = startPlot:stopPlot
     mapCrossings((i - startPlot + 1), :) = zeroCrossingsX;
 end
 
-% Import of define background spectrum. ASSUME 1st spectrum is desired
+% Import of define background spectrum. ASSUME bgPlot spectrum is desired
 % spectrum
 backgroundSpectrum = mapCrossings(bgPlot, :);
 backgroundIntensities = adjustedIntensities(bgPlot, :);

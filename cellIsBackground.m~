@@ -1,0 +1,43 @@
+function [isBackground] = cellIsBackground(spectrum, number, backgroundPath)
+
+bgs = 1;
+spectrum = squeeze(spectrum);
+
+% Assume only one background to be loaded for now
+[BGXScale, correctedSpectrum, ~, BGinflections] = dptRead(backgroundPath, 1, bgs, 'y');
+BGinflections = squeeze(BGinflections);
+
+
+for index = 1:bgs
+    spectrumInflections = diff(spectrum)./diff(BGXScale);
+    spectrumInflections = diff(spectrumInflections)./diff(BGXScale(1:length(BGXScale) - 1));
+    
+    if (sum(abs(spectrumInflections)) ~= 0)
+        % Find zeros, flip to restore conventional spectral notation
+        zeroCrossingsX = data_zeros(flip(BGXScale), flip(spectrumInflections))';
+        % Pad with zeros to concatenate
+        zeroCrossingsX = [flip(sort(zeroCrossingsX)') zeros(1, length(BGXScale) - length(zeroCrossingsX))]';
+    else
+        zeroCrossingsX = zeros(1, length(xScale));
+    end
+    
+    % Compare inflection points for each
+    errorSum = 0;
+    for derIndex = 1:length(zeroCrossingsX)
+        if(BGinflections(derIndex) == 0)
+            magnitude = 0;
+        else
+            [searchResult, ~] = searchX(BGXScale, BGinflections(x, y, z));
+            magnitude = correctedSpectraScoreLocal(x, y, searchResult);
+        end
+        errorSum = errorSum + weightArray .* magnitude;
+    end
+    
+    if (errorSum > 150000)
+        isBackground = true;
+    else
+        isBackground = false;
+    end
+    fprintf('Stripping background %d (Score: %d)\n', number, errorSum);
+end
+end

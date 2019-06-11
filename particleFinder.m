@@ -8,12 +8,15 @@ prompt = 'File name on Desktop (Dont include extensions): ';
 fileName = input(prompt, 's');
 readPath = [filePath  fileName  '.dpt'];
 
-% filePath = 'C:\Users\PC\iCloudDrive\Desktop\UHRMap135.dpt';
+rowLength = input('Row length: ');
+colLength = input('Number of columns: ');
+
+% readPath = 'C:\Users\PC\iCloudDrive\Desktop\UHRsample140.dpt';
 
 % Set significance cutoff for background noise
 lowerSignificanceCutoff = 0;
 
-[xScale, correctedSpectra, rawSpectra, inflectionsFull] = dptRead(readPath, 25, 25);
+[xScale, correctedSpectra, rawSpectra, inflectionsFull] = dptRead(readPath, rowLength, colLength, 'n');
 
 scArry = score(inflectionsFull, correctedSpectra, xScale);
 
@@ -41,14 +44,14 @@ numberOfParticles = max(max(clusters));
 particleSpectra = zeros(length(xScale), numberOfParticles + 1);
 particleSpectra(:, 1) = flip(xScale);
 
-figure;
-hold on;
-
 for particle = 1:numberOfParticles
-%    particleSpectra(:, particle + 1) = generateParticleSpectrum(clusters, particle, rawSpectra, xScale);
-    particleSpectra(:, particle + 1) = generateParticleSpectrum(clusters, particle, correctedSpectra, xScale);
-    plot(xScale, particleSpectra(:, particle + 1));
-    %set(gca, 'XDir','reverse');
+    figure;
+    particleSpectra(:, particle + 1) = flip(generateParticleSpectrum(clusters, particle, rawSpectra, xScale));
+%    particleSpectra(:, particle + 1) = generateParticleSpectrum(clusters, particle, correctedSpectra, xScale);
+    plot(xScale, flip(particleSpectra(:, particle + 1)));
+    set(gca, 'XDir','reverse');
+    titleString = sprintf('Particle %d Average Spectrum', particle);
+    title(titleString);
 end
 
 writePath = [filePath 'PendingSearches/' fileName 'Clustered' '.csv'];
