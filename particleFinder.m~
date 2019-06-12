@@ -4,37 +4,26 @@ format compact;
 close all;
 
 % bgs is number of spectra in the library of backgrounds
-filePath = '/Users/mattmcpartlan/Desktop/PendingSearches/BGReferencesData.txt';
-bgs = csvread(filePath);
+bgs = 630;
 
 filePath = '/Users/mattmcpartlan/Desktop/';
 prompt = 'File name on Desktop (Dont include extensions): ';
-fileName = input(prompt, 's');
+fileName = 'OVRsample144';
+% fileName = input(prompt, 's');
 readPath = [filePath  fileName  '.dpt'];
 
-isSquare = input('Press return if spectral map is square: ', 's');
+% rowLength = input('Row length: ');
+% colLength = input('Number of columns: ');
 
-if (~isempty(isSquare))
-    rowLength = input('Row length: ');
-    colLength = input('Number of columns: ');
-    dptFile = csvread(readPath);
-else
-    dptFile = csvread(readPath);
-    [~, dptSize] = size(dptFile);
-    rowLength = sqrt(dptSize - 1);
-    colLength = rowLength;
-end
-
-
-% rowLength = 60;
-% colLength = 60;
+rowLength = 50;
+colLength = 50;
 
 % readPath = 'C:\Users\PC\iCloudDrive\Desktop\UHRsample140.dpt';
 
 % Set significance cutoff for background noise
 lowerSignificanceCutoff = 0;
 
-[xScale, correctedSpectra, rawSpectra, inflectionsFull] = dptRead(dptFile, rowLength, colLength, 'n');
+[xScale, correctedSpectra, rawSpectra, inflectionsFull] = dptRead(readPath, rowLength, colLength, 'n');
 
 scArry = score(inflectionsFull, correctedSpectra, xScale, bgs);
 
@@ -65,7 +54,7 @@ particleSpectra(:, 1) = flip(xScale);
 for particle = 1:numberOfParticles
     figure;
     particleSpectra(:, particle + 1) = flip(generateParticleSpectrum(clusters, particle, rawSpectra, xScale));
-    %    particleSpectra(:, particle + 1) = generateParticleSpectrum(clusters, particle, correctedSpectra, xScale);
+%    particleSpectra(:, particle + 1) = generateParticleSpectrum(clusters, particle, correctedSpectra, xScale);
     plot(xScale, flip(particleSpectra(:, particle + 1)));
     set(gca, 'XDir','reverse');
     titleString = sprintf('Particle %d Average Spectrum', particle);
@@ -89,23 +78,6 @@ for k = 1:length(b)
     end
 end
 
-for i = 1:numel(b)
-    %# get the ZData matrix of the current group
-    Z = get(b(i), 'ZData');
-
-    %# row-indices of Z matrix. Columns correspond to each rectangular bar
-    rowsInd = reshape(1:size(Z,1), 6,[]);
-
-    %# find bars with zero height
-    barsIdx = all([Z(2:6:end, 2:3) Z(3:6:end, 2:3)] == 0, 2);
-
-    %# replace their values with NaN for those bars
-    Z(rowsInd(:, barsIdx),:) = NaN;
-
-    %# update the ZData
-    set(b(i), 'ZData', Z);
-end
-
 figure;
 c = bar3(clusters);
 
@@ -117,21 +89,4 @@ for k = 1:length(c)
     else
         c(k).FaceColor = 'interp';
     end
-end
-
-for i = 1:numel(c)
-    %# get the ZData matrix of the current group
-    Z = get(c(i), 'ZData');
-
-    %# row-indices of Z matrix. Columns correspond to each rectangular bar
-    rowsInd = reshape(1:size(Z,1), 6,[]);
-
-    %# find bars with zero height
-    barsIdx = all([Z(2:6:end, 2:3) Z(3:6:end, 2:3)] == 0, 2);
-
-    %# replace their values with NaN for those bars
-    Z(rowsInd(:, barsIdx),:) = NaN;
-
-    %# update the ZData
-    set(c(i), 'ZData', Z);
 end

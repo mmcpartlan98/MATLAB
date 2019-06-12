@@ -1,5 +1,6 @@
-function [xScale, correctedSpectra, rawSpectra, inflectionsFull] = dptRead(dptFile, xGrid, yGrid, suppressOutput)
+function [xScale, correctedSpectra, rawSpectra, inflectionsFull] = dptRead(filename, xGrid, yGrid, suppressOutput)
 % Returns xScale in ASCENDING order and rawSpectra flipped to MATCH xSCALE
+dptFile = csvread(filename);
 windowSize = 50;
 debug = 'n';
 % Ascending order
@@ -14,6 +15,12 @@ rawSpectra = zeros(xGrid, yGrid, length(xScale));
 rowIndex = xGrid;
 colIndex = 1;
 
+linearCorrectedSpectra = zeros(xGrid * yGrid, 1);
+
+parfor (i = 2:columns)
+    linearCorrectedSpectra(i) = msbackadj(xScale, flip(dptFile(:, i)), 'StepSize', windowSize);
+end
+
 for fileColumn = columns:-1:2
     
     % Raw absorbance values (flipped to match ascending xScale)
@@ -21,7 +28,8 @@ for fileColumn = columns:-1:2
     rawSpectra(rowIndex, colIndex, :) = intensity;
     
     % Baseline adjusted absorbance
-    baselineCorrected = msbackadj(xScale, intensity, 'StepSize', windowSize);
+    % baselineCorrected = msbackadj(xScale, intensity, 'StepSize', windowSize);
+    baselineCorrected = linearCorrectedSpectra
     % baselineCorrected = stripOffset(xScale, intensity);
     correctedSpectra(rowIndex, colIndex, :) = baselineCorrected;
     

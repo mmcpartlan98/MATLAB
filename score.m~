@@ -34,9 +34,7 @@ end
 
 % Strip black background surrounding gold disk
 % BG reference file
-BGReference = csvread('/Users/mattmcpartlan/Desktop/PendingSearches/BGReferences.txt');
-[~, bgs] = size(BGReference);
-bgs = bgs - 1;
+BGReference = '/Users/mattmcpartlan/Desktop/PendingSearches/BGReferences.txt';
 
 [~, correctedBG, ~, ~] = dptRead(BGReference, 1, bgs, 'y');
 correctedBG = squeeze(smoothdata(correctedBG, 'gaussian', 5));
@@ -46,7 +44,7 @@ parfor x = 1:xGrid
         
         clc;
         fprintf('Stripping background at cell %d of %d\n', ((x - 1) * yGrid + y), xGrid * yGrid);
-        fprintf('%0.2f%% complete\n', (((x - 1) * yGrid + y)/(xGrid * yGrid)) * 100);
+        fprintf('%0.2f%% done\n', (((x - 1) * yGrid + y)/(xGrid * yGrid)) * 100);
         
         if cellIsBackground(correctedSpectraScoreLocal(x, y, :), correctedBG) == true
             correctedSpectraScoreLocal(x, y, :) = zeros(1, length(xScaleLocal));
