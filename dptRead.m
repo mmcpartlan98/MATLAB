@@ -1,4 +1,4 @@
-function [xScale, correctedSpectra, rawSpectra, inflectionsFull] = dptRead(dptFile, xGrid, yGrid, suppressOutput)
+function [xScale, correctedSpectra, rawSpectra, inflectionsFull] = dptRead(dptFile, xGrid, yGrid, suppressOutput, output)
 % Returns xScale in ASCENDING order and rawSpectra flipped to MATCH xSCALE
 windowSize = 50;
 debug = 'n';
@@ -33,8 +33,8 @@ for fileColumn = columns:-1:2
     
     if suppressOutput ~= 'y'
         clc;
-        fprintf('Parsing cell: %d\n =====================\n', fileColumn);
-        fprintf('%0.2f%% complete\n', (1 - fileColumn/columns) * 100);
+        fprintf('%s: %d\n=====================\n', output, fileColumn - 1);
+        fprintf('%0.2f%% complete\n', (1 - (fileColumn - 2)/columns) * 100);
     end
     
     if (sum(abs(numDerivative)) ~= 0)

@@ -3,9 +3,9 @@ clc;
 format compact;
 
 % Use this script to generate a file of background spectra
-cutoff = 185;
+cutoff = 160;
 % radius = 22;
-radius = 10;
+radius = 0;
 
 filePath = '/Users/mattmcpartlan/Desktop/';
 fileName = input('File name on Desktop (Dont include extensions): ', 's');
@@ -27,13 +27,13 @@ backgroundPath = csvread('/Users/mattmcpartlan/Desktop/PendingSearches/BGReferen
 [~, bgs] = size(backgroundPath);
 bgs = bgs - 1;
 
-[xScale, correctedSpectra, rawSpectra, ~] = dptRead(readPath, rowLength, colLength, 'n');
+[xScale, correctedSpectra, rawSpectra, ~] = dptRead(readPath, rowLength, colLength, 'n', 'Parsing map spectrum');
 
 
 
 scoreArray = zeros(rowLength, colLength);
 % Assume only one background to be loaded for now
-[~, correctedBG, rawBG, ~] = dptRead(backgroundPath, 1, bgs, 'y');
+[~, correctedBG, rawBG, ~] = dptRead(backgroundPath, 1, bgs, 'n', 'Parsing library data');
 correctedBG = squeeze(smoothdata(correctedBG, 'gaussian', 5));
 
 for i = 1:rowLength
@@ -108,7 +108,7 @@ for i = 2:numberOfSpectra
     clc;
     fprintf('Finding new spectra: %0.2f%%\n', (i/numberOfSpectra)*100);
     isNew = 0;
-    for e = 2:numberOfPreviousSpectra
+    for e = 1:numberOfPreviousSpectra
         test = squeeze(exportLibrary(:, i)) - squeeze(previousLibrary(:, e));
         if (sum(test) == 0 && i ~= e)
             isNew = 1;
@@ -157,52 +157,70 @@ end
 figure;
 hold on;
 [~, entries] = size(newSpectra);
-for i = 2:entries
+for i = 1:entries
     plot(spectraToWrite(:, 1), newSpectra(:, i));
+    set(gca, 'XDir','reverse');
 end
 
-prompt = input('Write spectra to library? (y/n): ', 's');
-
-if (prompt == 'y')
+if (sum(newSpectra, 'all') ~= 0)
+    prompt = input('Write spectra to library? (y/n): ', 's');
     
-    prompt = input('Run editor?', 's');
     if (prompt == 'y')
-        close all;
-        figure;
-        backupNewSpectra = newSpectra;
-        clear newSpectra;
-        newSpectra(:, 1) = zeros(length(xScale), 1);
-        newSpectraIndex = 1;
-        [~, numberOfSpectra] = size(backupNewSpectra);
-        for i = 2:numberOfSpectra
-            clc;
-            fprintf('Approving new backgrounds: %0.2f%%\n', (i/numberOfSpectra)*100);
-            plot(newSpectraExport(:, 1), backupNewSpectra(:, i));
-            set(gca, 'XDir','reverse');
-            prompt = input('Is this a background spectrum? (y/n): ', 's');
-            if (isempty(prompt))
-                newSpectra(:, newSpectraIndex) = backupNewSpectra(:, i);
-                newSpectraIndex = newSpectraIndex + 1;
+        
+        prompt = input('Run editor?', 's');
+        if (prompt == 'y')
+            close all;
+            figure;
+            backupNewSpectra = newSpectra;
+            clear newSpectra;
+            newSpectra(:, 1) = zeros(length(xScale), 1);
+            newSpectraIndex = 1;
+            [~, numberOfSpectra] = size(backupNewSpectra);
+            
+            i = 1;
+            while (i <= numberOfSpectra)
+                clc;
+                fprintf('Approving new backgrounds: %0.2f%%\n', (i/numberOfSpectra)*100);
+                plot(newSpectraExport(:, 1), backupNewSpectra(:, i));
+                set(gca, 'XDir','reverse');
+                prompt = input('Press return to confirm (or enter "n" or "d" or "r"): ', 's');
+                if (isempty(prompt))
+                    newSpectra(:, newSpectraIndex) = backupNewSpectra(:, i);
+                    newSpectraIndex = newSpectraIndex + 1;
+                elseif (prompt == 'd')
+                    break;
+                elseif (prompt == 'r')
+                    i = i - 2;
+                    newSpectraIndex = newSpectraIndex + 1;
+                    newSpectra(:, newSpectraIndex) = backupNewSpectra(:, i);
+                end
+                i = i + 1;
             end
         end
-    end
-    
-    exportLibrary = [newSpectraExport newSpectra];
-    writematrix(exportLibrary, writePath);
-    [~, entries] = size(exportLibrary);
-    writePath = '/Users/mattmcpartlan/Desktop/BGReferencesData.txt';
-    writematrix(entries, writePath);
-    
-    close all;
-    fprintf('Exported %d suspected background spectra.\n', entries);
-    
-    figure;
-    hold on;
-    [~, entries] = size(exportLibrary);
-    for i = 2:entries
-        plot(exportLibrary(:, 1), exportLibrary(:, i));
-        set(gca, 'XDir','reverse');
+        
+        if (sum(newSpectra, 'all') ~= 0)
+            exportLibrary = [newSpectraExport newSpectra];
+        else
+            exportLibrary = newSpectraExport;
+        end
+        writematrix(exportLibrary, writePath);
+        [~, entries] = size(exportLibrary);
+        writePath = '/Users/mattmcpartlan/Desktop/PendingSearches/BGReferencesData.txt';
+        writematrix(entries, writePath);
+        
+        close all;
+        fprintf('Exported %d suspected background spectra.\n', entries);
+        
+        figure;
+        hold on;
+        [~, entries] = size(exportLibrary);
+        for i = 2:entries
+            plot(exportLibrary(:, 1), exportLibrary(:, i));
+            set(gca, 'XDir','reverse');
+        end
+    else
+        fprintf('Spectra not saved.\n');
     end
 else
-    fprintf('Spectra not saved.\n');
+    fprintf('No new spectra to save.\n');
 end

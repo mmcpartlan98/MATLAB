@@ -10,7 +10,7 @@ bgs = csvread(filePath);
 filePath = '/Users/mattmcpartlan/Desktop/';
 prompt = 'File name on Desktop (Dont include extensions): ';
 fileName = input(prompt, 's');
-readPath = [filePath  fileName  '.dpt'];
+readPath = [filePath fileName '.dpt'];
 
 isSquare = input('Press return if spectral map is square: ', 's');
 
@@ -34,7 +34,7 @@ end
 % Set significance cutoff for background noise
 lowerSignificanceCutoff = 0;
 
-[xScale, correctedSpectra, rawSpectra, inflectionsFull] = dptRead(dptFile, rowLength, colLength, 'n');
+[xScale, correctedSpectra, rawSpectra, inflectionsFull] = dptRead(dptFile, rowLength, colLength, 'n', 'Parsing spectra map');
 
 scArry = score(inflectionsFull, correctedSpectra, xScale, bgs);
 
