@@ -79,15 +79,12 @@ prompt = input('Press return to label backgrounds (or "d" to exit): ', 's');
 if isempty(prompt)
     close all;
     rawScoreFigure = prettyBar3(scArry);
-    
-    % SIMPLE FLAG
-    % ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    backgroundPath = csvread('PendingSearches/BGReferences.txt');
+    backgroundPath = csvread('PendingSearches/BGReferencesSIMPLE.txt');
     [~, bgs] = size(backgroundPath);
     bgs = bgs - 1;
-    [bgXScale, ~, rawBG, ~] = dptRead(backgroundPath, 1, bgs, 'n', 'Parsing library data');
+    [~, ~, rawBG, ~] = dptRead(backgroundPath, 1, bgs, 'n', 'Parsing library data');
     
-    selectedBGSpectra = [flip(bgXScale) flip(squeeze(rawBG)')];
+    selectedBGSpectra = [xScale squeeze(rawBG)'];
     modifiedSpectraFlag = false;
     
     while isempty(prompt)
@@ -111,23 +108,23 @@ if isempty(prompt)
         
         plot(xScale, squeeze(rawSpectra(bgRow, bgCol, :)), 'r');
         set(gca, 'XDir','reverse');
-        
+        close(rawScoreFigure);
         outputString = sprintf('Confirm (y/n) that position %d, %d is background: ', bgRow, bgCol);
         prompt = input(outputString, 's');
         if (prompt == 'y')
             scArry(bgRow, bgCol) = 0;
             modifiedSpectraFlag = true;
-            selectedBGSpectra = [selectedBGSpectra flip(squeeze(rawSpectra(bgRow, bgCol, :)))]; %#ok<AGROW>
+            selectedBGSpectra = [selectedBGSpectra squeeze(rawSpectra(bgRow, bgCol, :))]; %#ok<AGROW>
         end
         prompt = input('Press return to enter another background (or enter "d"): ', 's');
     end
     
     [~, entries] = size(selectedBGSpectra);
-    outputString = sprintf('Save %d new spectra as background references (y/n): ', (entries - bgs - 1));
+    outputString = sprintf('Save %d new spectra as background references (y/n): ', (entries - bgs));
     prompt = input(outputString, 's');
     if (modifiedSpectraFlag == true && prompt == 'y')
         writePath = 'PendingSearches/BGReferences.txt';
-        Owritematrix(selectedBGSpectra, writePath);
+        writematrix(exportLibrary, writePath);
         writePath = 'PendingSearches/BGReferencesData.txt';
         writematrix(entries, writePath);
     end

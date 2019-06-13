@@ -13,7 +13,7 @@ for index = 1:bgs
     end
 end
 
-if (smallestError < 50)
+if (smallestError < 35)
     isBackground = true;
 else
     isBackground = false;

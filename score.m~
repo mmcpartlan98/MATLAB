@@ -36,7 +36,7 @@ end
 % BG reference file
 % SIMPLE FLAG
 % ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-BGReference = csvread('PendingSearches/BGReferences.txt');
+BGReference = csvread('PendingSearches/BGReferencesSIMP.txt');
 [~, bgs] = size(BGReference);
 bgs = bgs - 1;
 

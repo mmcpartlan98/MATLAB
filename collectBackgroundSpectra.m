@@ -3,7 +3,7 @@ clc;
 format compact;
 
 % Use this script to generate a file of background spectra
-cutoff = 160;
+cutoff = 35;
 % radius = 22;
 radius = 0;
 
@@ -23,7 +23,7 @@ else
     colLength = rowLength;
 end
 
-backgroundPath = csvread('/Users/mattmcpartlan/Desktop/PendingSearches/BGReferences.txt');
+backgroundPath = csvread('PendingSearches/BGReferencesSIMPLE.txt');
 [~, bgs] = size(backgroundPath);
 bgs = bgs - 1;
 
@@ -41,13 +41,13 @@ for i = 1:rowLength
         spectrum = squeeze(smoothdata(correctedSpectra(i, e, :), 'gaussian', 7));
         clc;
         fprintf('Stripping background: %0.2f%% complete\n', (((i - 1) * colLength + e)/(rowLength * colLength)) * 100);
+        smallestError = Inf;
         for index = 1:bgs
             
             % Attempt simple point-by-point subtraction-summation
             
             error = abs(spectrum - correctedBG(index, :)');
             errorSum = sum(error);
-            smallestError = Inf;
             
             if (errorSum < smallestError)
                 smallestError = errorSum;
@@ -73,7 +73,7 @@ for i = 1:rowLength
 end
 
 % Filter out repeats and export new spectra to background library
-writePath = '/Users/mattmcpartlan/Desktop/PendingSearches/BGReferences.txt';
+writePath = 'PendingSearches/BGReferences.txt';
 unfilteredLibrary = [spectraToWrite flip(squeeze(rawBG)')];
 [~, numberOfSpectra] = size(unfilteredLibrary);
 exportLibrary(:, 1) = unfilteredLibrary(:, 1);
@@ -125,34 +125,7 @@ end
 
 % Generare figures below
 close all;
-b = bar3(scoreArray);
-
-for k = 1:length(b)
-    zdata = b(k).ZData;
-    b(k).CData = zdata;
-    if (b(k) == 0)
-        b(k).FaceColor = 'none';
-    else
-        b(k).FaceColor = 'interp';
-    end
-end
-
-for i = 1:numel(b)
-    %# get the ZData matrix of the current group
-    Z = get(b(i), 'ZData');
-    
-    %# row-indices of Z matrix. Columns correspond to each rectangular bar
-    rowsInd = reshape(1:size(Z,1), 6,[]);
-    
-    %# find bars with zero height
-    barsIdx = all([Z(2:6:end, 2:3) Z(3:6:end, 2:3)] == 0, 2);
-    
-    %# replace their values with NaN for those bars
-    Z(rowsInd(:, barsIdx),:) = NaN;
-    
-    %# update the ZData
-    set(b(i), 'ZData', Z);
-end
+prettyBar3(scoreArray);
 
 figure;
 hold on;
@@ -181,9 +154,38 @@ if (sum(newSpectra, 'all') ~= 0)
             while (i <= numberOfSpectra)
                 clc;
                 fprintf('Approving new backgrounds: %0.2f%%\n', (i/numberOfSpectra)*100);
-                plot(newSpectraExport(:, 1), backupNewSpectra(:, i));
+                plot(newSpectraExport(:, 1), backupNewSpectra(:, i), 'k');
                 set(gca, 'XDir','reverse');
-                prompt = input('Press return to confirm (or enter "n" or "d" or "r"): ', 's');
+                
+                % Calculate the score for each spectrum (to display as a
+                % reference)
+                spectrumAdj = flip(squeeze(smoothdata(msbackadj(xScale, backupNewSpectra(:, i), 'StepSize', 50), 'gaussian', 7)));
+                smallestError = Inf;
+                smallestErrorIndex = NaN;
+                for index = 1:bgs
+                    
+                    % Attempt simple point-by-point subtraction-summation
+                    
+                    error = abs(spectrumAdj - squeeze(smoothdata(correctedBG(index, :), 'gaussian', 5))');
+                    errorSum = sum(error);
+                    
+                    if (errorSum < smallestError)
+                        smallestError = errorSum;
+                        smallestErrorIndex = index;
+                        spectrumLib = squeeze(smoothdata(correctedBG(index, :), 'gaussian', 5))';
+                    end
+                end
+                hold on;
+                plot(xScale, squeeze(rawBG(1, smallestErrorIndex, :))', 'r');
+                hold off;
+%                 figure;
+%                 hold on;
+%                 plot(xScale, spectrumAdj, 'k');
+%                 plot(xScale, spectrumLib, 'r');
+%                 hold off;
+                fprintf('Spectrum score: %s compared to library entry %s\n', num2str(smallestError), num2str(smallestErrorIndex));
+                prompt = input('Press return to confirm (or enter "n" or "d" or "r" or "j"): ', 's');
+                
                 if (isempty(prompt))
                     newSpectra(:, newSpectraIndex) = backupNewSpectra(:, i);
                     newSpectraIndex = newSpectraIndex + 1;
@@ -193,6 +195,11 @@ if (sum(newSpectra, 'all') ~= 0)
                     i = i - 2;
                     newSpectraIndex = newSpectraIndex - 1;
                     newSpectra = newSpectra(:, 1:newSpectraIndex - 1);
+                    if (newSpectraIndex < 1)
+                        newSpectraIndex = 1;
+                    end
+                elseif (prompt == 'j')
+                    i = i + 9;
                 end
                 i = i + 1;
             end
@@ -205,7 +212,7 @@ if (sum(newSpectra, 'all') ~= 0)
         end
         writematrix(exportLibrary, writePath);
         [~, entries] = size(exportLibrary);
-        writePath = '/Users/mattmcpartlan/Desktop/PendingSearches/BGReferencesData.txt';
+        writePath = 'PendingSearches/BGReferencesData.txt';
         writematrix(entries, writePath);
         
         close all;
