@@ -21,12 +21,6 @@ else
     colLength = rowLength;
 end
 
-
-% rowLength = 60;
-% colLength = 60;
-
-% readPath = 'C:\Users\PC\iCloudDrive\Desktop\UHRsample140.dpt';
-
 % Set significance cutoff for background noise
 lowerSignificanceCutoff = 0;
 
@@ -59,10 +53,11 @@ particleSpectra = zeros(length(xScale), numberOfParticles + 1);
 particleSpectra(:, 1) = flip(xScale);
 
 for particle = 1:numberOfParticles
-    figure;
+    % figure;
     particleSpectra(:, particle + 1) = flip(generateParticleSpectrum(clusters, particle, rawSpectra, xScale));
     %    particleSpectra(:, particle + 1) = generateParticleSpectrum(clusters, particle, correctedSpectra, xScale);
     plot(xScale, flip(particleSpectra(:, particle + 1)));
+    hold on;
     set(gca, 'XDir','reverse');
     titleString = sprintf('Particle %d Average Spectrum', particle);
     title(titleString);
@@ -86,8 +81,13 @@ if isempty(prompt)
     [~, bgs] = size(backgroundPath);
     bgs = bgs - 1;
     [bgXScale, ~, rawBG, ~] = dptRead(backgroundPath, 1, bgs, 'n', 'Parsing library data');
-    
     selectedBGSpectra = [flip(bgXScale) flip(squeeze(rawBG)')];
+    
+    prevBackup = csvread('LibraryBackups/BGReferencesIndex.txt');
+    writePath = ['LibraryBackups/BGReferences' num2str(prevBackup) '.txt'];
+    writematrix(selectedBGSpectra, writePath);
+    writematrix(prevBackup + 1, 'LibraryBackups/BGReferencesIndex.txt');
+    
     modifiedSpectraFlag = false;
     
     while isempty(prompt)
@@ -98,6 +98,8 @@ if isempty(prompt)
         view(2);
         bgRow = Inf;
         bgCol = Inf;
+        
+        % BUG IF USER PRESSES RETURN WITHOUT SELECTING A POINT
         while (bgRow > rowLength || bgCol > colLength)
             [bgCol, bgRow] = ginput(1);
             bgRow = round(bgRow);
@@ -127,7 +129,7 @@ if isempty(prompt)
     prompt = input(outputString, 's');
     if (modifiedSpectraFlag == true && prompt == 'y')
         writePath = 'PendingSearches/BGReferences.txt';
-        Owritematrix(selectedBGSpectra, writePath);
+        writematrix(selectedBGSpectra, writePath);
         writePath = 'PendingSearches/BGReferencesData.txt';
         writematrix(entries, writePath);
     end

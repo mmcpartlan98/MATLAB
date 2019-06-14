@@ -3,7 +3,7 @@ clc;
 format compact;
 
 % Use this script to generate a file of background spectra
-cutoff = 35;
+cutoff = 90;
 % radius = 22;
 radius = 0;
 
@@ -23,18 +23,21 @@ else
     colLength = rowLength;
 end
 
-backgroundPath = csvread('PendingSearches/BGReferencesSIMPLE.txt');
+backgroundPath = csvread('PendingSearches/BGReferences.txt');
 [~, bgs] = size(backgroundPath);
 bgs = bgs - 1;
 
-[xScale, correctedSpectra, rawSpectra, ~] = dptRead(readPath, rowLength, colLength, 'n', 'Parsing map spectrum');
-
-
+[xScale, correctedSpectra, rawSpectra, ~] = dptRead(readPath, rowLength, colLength, 'n', 'Parsing map cells');
 
 scoreArray = zeros(rowLength, colLength);
-% Assume only one background to be loaded for now
-[~, correctedBG, rawBG, ~] = dptRead(backgroundPath, 1, bgs, 'n', 'Parsing library data');
+[~, correctedBG, rawBG, ~] = dptRead(backgroundPath, 1, bgs, 'n', 'Parsing library spectra');
 correctedBG = squeeze(smoothdata(correctedBG, 'gaussian', 5));
+
+selectedBGSpectraBackup = [flip(xScale) flip(squeeze(rawBG)')];
+
+prevBackup = csvread('LibraryBackups/BGReferencesIndex.txt');
+writematrix(selectedBGSpectraBackup, ['LibraryBackups/BGReferences' num2str(prevBackup) '.txt']);
+writematrix(prevBackup + 1, 'LibraryBackups/BGReferencesIndex.txt');
 
 for i = 1:rowLength
     for e = 1:colLength
@@ -136,6 +139,7 @@ for i = 1:entries
 end
 
 if (sum(newSpectra, 'all') ~= 0)
+    fprintf('Found %d new spectra...\n', numberOfSpectra);
     prompt = input('Write spectra to library? (y/n): ', 's');
     
     if (prompt == 'y')
@@ -178,11 +182,11 @@ if (sum(newSpectra, 'all') ~= 0)
                 hold on;
                 plot(xScale, squeeze(rawBG(1, smallestErrorIndex, :))', 'r');
                 hold off;
-%                 figure;
-%                 hold on;
-%                 plot(xScale, spectrumAdj, 'k');
-%                 plot(xScale, spectrumLib, 'r');
-%                 hold off;
+                %                 figure;
+                %                 hold on;
+                %                 plot(xScale, spectrumAdj, 'k');
+                %                 plot(xScale, spectrumLib, 'r');
+                %                 hold off;
                 fprintf('Spectrum score: %s compared to library entry %s\n', num2str(smallestError), num2str(smallestErrorIndex));
                 prompt = input('Press return to confirm (or enter "n" or "d" or "r" or "j"): ', 's');
                 

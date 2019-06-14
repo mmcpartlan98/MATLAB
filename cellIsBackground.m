@@ -1,5 +1,5 @@
 function [isBackground] = cellIsBackground(spectrum, correctedBG)
-spectrum = squeeze(smoothdata(spectrum, 'gaussian', 7));
+spectrum = squeeze(spectrum);
 [bgs, ~] = size(correctedBG);
 smallestError = Inf;
 for index = 1:bgs
@@ -13,7 +13,7 @@ for index = 1:bgs
     end
 end
 
-if (smallestError < 35)
+if (smallestError < 1)
     isBackground = true;
 else
     isBackground = false;

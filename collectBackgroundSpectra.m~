@@ -3,7 +3,7 @@ clc;
 format compact;
 
 % Use this script to generate a file of background spectra
-cutoff = 35;
+cutoff = 140;
 % radius = 22;
 radius = 0;
 
@@ -29,12 +29,15 @@ bgs = bgs - 1;
 
 [xScale, correctedSpectra, rawSpectra, ~] = dptRead(readPath, rowLength, colLength, 'n', 'Parsing map spectrum');
 
-
-
 scoreArray = zeros(rowLength, colLength);
-% Assume only one background to be loaded for now
 [~, correctedBG, rawBG, ~] = dptRead(backgroundPath, 1, bgs, 'n', 'Parsing library data');
 correctedBG = squeeze(smoothdata(correctedBG, 'gaussian', 5));
+
+selectedBGSpectraBackup = [flip(xScale) flip(squeeze(rawBG)')];
+
+prevBackup = csvread('LibraryBackups/BGReferencesIndex.txt');
+writematrix(selectedBGSpectraBackup, ['LibraryBackups/BGReferences' num2str(prevBackup) '.txt']);
+writematrix(prevBackup
 
 for i = 1:rowLength
     for e = 1:colLength
@@ -178,11 +181,11 @@ if (sum(newSpectra, 'all') ~= 0)
                 hold on;
                 plot(xScale, squeeze(rawBG(1, smallestErrorIndex, :))', 'r');
                 hold off;
-%                 figure;
-%                 hold on;
-%                 plot(xScale, spectrumAdj, 'k');
-%                 plot(xScale, spectrumLib, 'r');
-%                 hold off;
+                %                 figure;
+                %                 hold on;
+                %                 plot(xScale, spectrumAdj, 'k');
+                %                 plot(xScale, spectrumLib, 'r');
+                %                 hold off;
                 fprintf('Spectrum score: %s compared to library entry %s\n', num2str(smallestError), num2str(smallestErrorIndex));
                 prompt = input('Press return to confirm (or enter "n" or "d" or "r" or "j"): ', 's');
                 

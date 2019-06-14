@@ -41,7 +41,7 @@ BGReference = csvread('PendingSearches/BGReferences.txt');
 bgs = bgs - 1;
 
 [~, correctedBG, ~, ~] = dptRead(BGReference, 1, bgs, 'n', 'Parsing background library');
-correctedBG = squeeze(smoothdata(correctedBG, 'gaussian', 5));
+correctedBG = squeeze(correctedBG);
 
 for x = 1:xGrid
     for y = 1:yGrid
