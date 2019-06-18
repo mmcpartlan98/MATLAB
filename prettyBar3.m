@@ -2,6 +2,10 @@ function [figureName] = prettyBar3(grid)
 figureName = figure;
 c = bar3(grid);
 
+[xDim, yDim] = size(grid);
+xlim([0 xDim]);
+ylim([0 yDim]);
+
 for k = 1:length(c)
     zdata = c(k).ZData;
     c(k).CData = zdata;

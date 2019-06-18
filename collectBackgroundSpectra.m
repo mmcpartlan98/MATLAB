@@ -3,7 +3,7 @@ clc;
 format compact;
 
 % Use this script to generate a file of background spectra
-cutoff = 90;
+cutoff = 0.025;
 % radius = 22;
 radius = 0;
 
@@ -23,25 +23,22 @@ else
     colLength = rowLength;
 end
 
-backgroundPath = csvread('PendingSearches/BGReferences.txt');
+backgroundPath = csvread('PendingSearches/BGReferencesSIMPLE.txt');
 [~, bgs] = size(backgroundPath);
 bgs = bgs - 1;
 
-[xScale, correctedSpectra, rawSpectra, ~] = dptRead(readPath, rowLength, colLength, 'n', 'Parsing map cells');
+[xScale, ~, rawSpectra, normalizedSpectra] = dptRead(readPath, rowLength, colLength, 'n', 'Parsing map spectrum');
+
+
 
 scoreArray = zeros(rowLength, colLength);
-[~, correctedBG, rawBG, ~] = dptRead(backgroundPath, 1, bgs, 'n', 'Parsing library spectra');
-correctedBG = squeeze(smoothdata(correctedBG, 'gaussian', 5));
-
-selectedBGSpectraBackup = [flip(xScale) flip(squeeze(rawBG)')];
-
-prevBackup = csvread('LibraryBackups/BGReferencesIndex.txt');
-writematrix(selectedBGSpectraBackup, ['LibraryBackups/BGReferences' num2str(prevBackup) '.txt']);
-writematrix(prevBackup + 1, 'LibraryBackups/BGReferencesIndex.txt');
+% Assume only one background to be loaded for now
+[~, ~, rawBG, normalizedBG] = dptRead(backgroundPath, 1, bgs, 'n', 'Parsing library data');
+normalizedBG = squeeze(normalizedBG);
 
 for i = 1:rowLength
     for e = 1:colLength
-        spectrum = squeeze(smoothdata(correctedSpectra(i, e, :), 'gaussian', 7));
+        spectrum = squeeze(normalizedSpectra(i, e, :));
         clc;
         fprintf('Stripping background: %0.2f%% complete\n', (((i - 1) * colLength + e)/(rowLength * colLength)) * 100);
         smallestError = Inf;
@@ -49,7 +46,7 @@ for i = 1:rowLength
             
             % Attempt simple point-by-point subtraction-summation
             
-            error = abs(spectrum - correctedBG(index, :)');
+            error = abs(spectrum - normalizedBG(index, :)');
             errorSum = sum(error);
             
             if (errorSum < smallestError)
@@ -139,7 +136,6 @@ for i = 1:entries
 end
 
 if (sum(newSpectra, 'all') ~= 0)
-    fprintf('Found %d new spectra...\n', numberOfSpectra);
     prompt = input('Write spectra to library? (y/n): ', 's');
     
     if (prompt == 'y')
@@ -170,23 +166,23 @@ if (sum(newSpectra, 'all') ~= 0)
                     
                     % Attempt simple point-by-point subtraction-summation
                     
-                    error = abs(spectrumAdj - squeeze(smoothdata(correctedBG(index, :), 'gaussian', 5))');
+                    error = abs(spectrumAdj - squeeze(smoothdata(normalizedBG(index, :), 'gaussian', 5))');
                     errorSum = sum(error);
                     
                     if (errorSum < smallestError)
                         smallestError = errorSum;
                         smallestErrorIndex = index;
-                        spectrumLib = squeeze(smoothdata(correctedBG(index, :), 'gaussian', 5))';
+                        spectrumLib = squeeze(smoothdata(normalizedBG(index, :), 'gaussian', 5))';
                     end
                 end
                 hold on;
                 plot(xScale, squeeze(rawBG(1, smallestErrorIndex, :))', 'r');
                 hold off;
-                %                 figure;
-                %                 hold on;
-                %                 plot(xScale, spectrumAdj, 'k');
-                %                 plot(xScale, spectrumLib, 'r');
-                %                 hold off;
+%                 figure;
+%                 hold on;
+%                 plot(xScale, spectrumAdj, 'k');
+%                 plot(xScale, spectrumLib, 'r');
+%                 hold off;
                 fprintf('Spectrum score: %s compared to library entry %s\n', num2str(smallestError), num2str(smallestErrorIndex));
                 prompt = input('Press return to confirm (or enter "n" or "d" or "r" or "j"): ', 's');
                 

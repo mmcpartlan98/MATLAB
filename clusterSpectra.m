@@ -4,7 +4,7 @@ function [clusters] = clusterSpectra(inflectionsFullLocal, plotResultsLocal, sco
 clusters = zeros(rows, cols);
 
 % Adjacent squares must be within 10% scores to count as a cluster
-hitThreshold = 0.10;
+hitThreshold = 0.5;
 
 backgroundCutoff = mean(scoreArrayLocal, 'all');
 

@@ -1,12 +1,14 @@
-function [scoreArray] = score(inflectionsFullScoreLocal, correctedSpectraScoreLocal, xScaleLocal)
-[xGrid, yGrid, zGrid] = size(inflectionsFullScoreLocal);
+function [scoreArray] = score(normalizedSpectraLocal, correctedSpectraScoreLocal, xScaleLocal)
+[xGrid, yGrid, zGrid] = size(correctedSpectraScoreLocal);
 
 % Construct score array
 scoreArray = zeros(xGrid, yGrid);
 scoreContributions = zeros(zGrid, 1);
 
-lowerFingerprint = 1000;
-upperFingerprint = 3500;
+lowerFingerprint = 1300;
+lowerMidFingerprint = 2300;
+upperMidFingerprint = 2500;
+upperFingerprint = 3000;
 
 % Generate polymer weighting array
 weightArray = xScaleLocal;
@@ -40,8 +42,8 @@ BGReference = csvread('PendingSearches/BGReferences.txt');
 [~, bgs] = size(BGReference);
 bgs = bgs - 1;
 
-[~, correctedBG, ~, ~] = dptRead(BGReference, 1, bgs, 'n', 'Parsing background library');
-correctedBG = squeeze(correctedBG);
+[~, ~, ~, normalizedBG] = dptRead(BGReference, 1, bgs, 'n', 'Parsing background library');
+normalizedBG = squeeze(normalizedBG);
 
 for x = 1:xGrid
     for y = 1:yGrid
@@ -50,7 +52,8 @@ for x = 1:xGrid
         fprintf('Stripping background at cell %d of %d\n', ((x - 1) * yGrid + y), xGrid * yGrid);
         fprintf('%0.2f%% complete\n', (((x - 1) * yGrid + y)/(xGrid * yGrid)) * 100);
         
-        if cellIsBackground(correctedSpectraScoreLocal(x, y, :), correctedBG) == true
+%         if cellIsBackground(correctedSpectraScoreLocal(x, y, :), correctedBG) == true
+        if cellIsBackground(normalizedSpectraLocal(x, y, :), normalizedBG) == true
             correctedSpectraScoreLocal(x, y, :) = zeros(1, length(xScaleLocal));
         end
     end
@@ -64,8 +67,12 @@ for x = 1:xGrid
         for z = 1:zGrid
             scoreContributions(z) = weightArray(z) * correctedSpectraScoreLocal(x, y, z);
         end
-        deltaMag = diff(scoreContributions(searchX(xScaleLocal, lowerFingerprint):searchX(xScaleLocal, upperFingerprint)));
-        deltaX = diff(xScaleLocal(searchX(xScaleLocal, lowerFingerprint):searchX(xScaleLocal, upperFingerprint)));
+        deltaMag = diff(scoreContributions(searchX(xScaleLocal, lowerFingerprint):searchX(xScaleLocal, lowerMidFingerprint)));
+        deltaX = diff(xScaleLocal(searchX(xScaleLocal, lowerFingerprint):searchX(xScaleLocal, lowerMidFingerprint)));
+        
+        deltaMag = [deltaMag; diff(scoreContributions(searchX(xScaleLocal, upperMidFingerprint):searchX(xScaleLocal, upperFingerprint)))];
+        deltaX = [deltaX; diff(xScaleLocal(searchX(xScaleLocal, upperMidFingerprint):searchX(xScaleLocal, upperFingerprint)))];
+        
         fingerprintRegionChange = abs(deltaMag ./ deltaX);
         scoreArray(x, y) = sum(fingerprintRegionChange) .* trapz(xScaleLocal(searchX(xScaleLocal, lowerFingerprint):searchX(xScaleLocal, upperFingerprint)), correctedSpectraScoreLocal(x, y, searchX(xScaleLocal, lowerFingerprint):searchX(xScaleLocal, upperFingerprint)));
     end

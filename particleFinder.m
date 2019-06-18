@@ -24,9 +24,9 @@ end
 % Set significance cutoff for background noise
 lowerSignificanceCutoff = 0;
 
-[xScale, correctedSpectra, rawSpectra, inflectionsFull] = dptRead(dptFile, rowLength, colLength, 'n', 'Parsing spectra map');
+[xScale, correctedSpectra, rawSpectra, normalizedFull] = dptRead(dptFile, rowLength, colLength, 'n', 'Parsing spectra map');
 
-scArry = score(inflectionsFull, correctedSpectra, xScale);
+scArry = score(normalizedFull, correctedSpectra, xScale);
 
 [rows, cols] = size(scArry);
 
@@ -45,7 +45,7 @@ minimum = min(min(scArry(scArry > 0)));
 [xMin,yMin] = find(scArry == minimum);
 [xMax,yMax] = find(scArry == maximum);
 
-clusters = clusterSpectra(inflectionsFull, 'n', scArry);
+clusters = clusterSpectra(normalizedFull, 'n', scArry);
 
 % Generate spectra for all each particle
 numberOfParticles = max(max(clusters));
@@ -132,5 +132,60 @@ if isempty(prompt)
         writematrix(selectedBGSpectra, writePath);
         writePath = 'PendingSearches/BGReferencesData.txt';
         writematrix(entries, writePath);
+    end
+end
+
+prompt = input('Would you like to export coordinates? (y/n): ', 's');
+
+if (prompt == 'y')
+    OVRCoords = dlmread(['/Users/mattmcpartlan/Desktop/' fileName '.ooic'],' ');
+    
+    xStart = min(OVRCoords(:, 1));
+    xRange = max(OVRCoords(:, 1)) - xStart;
+    xStep = xRange / colLength;
+    yStart = min(OVRCoords(:, 2));
+    yRange = max(OVRCoords(:, 2)) - yStart;
+    yStep = yRange / rowLength;
+    
+    % Each particle gets two adacent columns (x, y). Odd columns are x
+    % values, even columns are y values. Each particle's minimum and
+    % maximum corner coordinates are recorded
+    linearCoordinateString = zeros(2, numberOfParticles * 2);
+    
+    for p = 1:2:numberOfParticles*2
+        localMinX = Inf;
+        localMinY = Inf;
+        localMaxX = 0;
+        localMaxY = 0;
+        for i = 1:rowLength
+            for e = 1:colLength
+                if clusters(i, e) == p
+                    if (i < localMinX)
+                        localMinX = i;
+                    end
+                    
+                    if (i > localMaxX)
+                        localMaxX = i;
+                    end
+                    
+                    if (e < localMinY)
+                        localMinY = e;
+                    end
+                    
+                    if (e > localMaxY)
+                        localMaxY = e;
+                    end
+                end
+            end
+        end
+        localMinX = localMinX * xStep;
+        localMinY = localMinY * yStep;
+        localMaxX = localMaxX * xStep;
+        localMaxY = localMaxY * yStep;
+        
+        linearCoordinateString(1, p) = localMinX;
+        linearCoordinateString(1, p + 1) = localMinY;
+        linearCoordinateString(2, p) = localMaxX;
+        linearCoordinateString(2, p + 1) = localMaxY;
     end
 end
